@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Shelf — Historical Fiction Library</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+  :root{
+    --ink:#181B1F;
+    --ink-2:#22262B;
+    --ink-3:#2C3137;
+    --paper:#F7F3EA;
+    --amber:#9C7A4D;
+    --amber-bright:#C79B5F;
+    --sage:#7A8B6F;
+    --gray:#9A958A;
+    --line: rgba(247,243,234,0.12);
+    --serif: 'Fraunces', serif;
+    --sans: 'Inter', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:var(--sans);
+    min-height:100vh;
+  }
+  a{ color:inherit; }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    position:sticky; top:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 28px;
+    background:rgba(24,27,31,0.92);
+    backdrop-filter: blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .brand{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .brand .mark{ font-family:var(--serif); font-weight:700; font-size:1.5rem; letter-spacing:-0.01em; }
+  .brand .sub{ font-family:var(--mono); font-size:0.66rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--gray); }
+  .topbar-actions{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .search-wrap{ position:relative; }
+  .search-wrap input{
+    background:var(--ink-2); border:1px solid var(--line); color:var(--paper);
+    font-family:var(--sans); font-size:0.85rem;
+    padding:8px 14px 8px 32px; border-radius:20px; width:190px;
+    transition: width .25s ease, border-color .2s ease;
+  }
+  .search-wrap input:focus{ outline:none; border-color:var(--amber); width:240px; box-shadow:none; }
+  .search-wrap svg{ position:absolute; left:11px; top:50%; transform:translateY(-50%); width:14px; height:14px; opacity:0.5; }
+  .progress-pill{
+    font-family:var(--mono); font-size:0.68rem; color:var(--gray);
+    border:1px solid var(--line); padding:6px 12px; border-radius:20px; white-space:nowrap;
+  }
+
+  /* ---------- Layout ---------- */
+  .app-row{ min-height: calc(100vh - 65px - 64px); }
+
+  .shelf{
+    border-right:1px solid var(--line);
+    padding:22px 0 40px 0;
+    background: linear-gradient(180deg, var(--ink-2), var(--ink));
+    height: 100%;
+  }
+  .shelf-label{
+    font-family:var(--mono); font-size:0.66rem; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--gray); padding:0 22px 14px 22px;
+  }
+  .shelf-list{ list-style:none; margin:0; padding:0; }
+  .spine{
+    display:flex; align-items:center; gap:14px;
+    padding:13px 22px; cursor:pointer;
+    border-left:3px solid transparent;
+    transition: background .15s ease, border-color .15s ease;
+  }
+  .spine:hover{ background:rgba(247,243,234,0.04); }
+  .spine.active{ background:rgba(156,122,77,0.14); border-left-color:var(--amber); }
+  .spine-index{ font-family:var(--mono); font-size:0.72rem; color:var(--gray); width:24px; flex-shrink:0; }
+  .spine.active .spine-index{ color:var(--amber-bright); }
+  .spine-title{ font-family:var(--serif); font-weight:500; font-size:0.96rem; line-height:1.25; color:var(--paper); }
+  .spine.active .spine-title{ color:var(--amber-bright); }
+  .spine-author{ font-family:var(--sans); font-size:0.73rem; color:var(--gray); margin-top:2px; }
+  .no-results{ padding:20px 22px; color:var(--gray); font-size:0.85rem; font-style:italic; }
+
+  /* ---------- Reading pane ---------- */
+  .reading-pane{ padding: 56px 56px 90px 56px; max-width: 760px; }
+  @media (max-width: 767px){ .reading-pane{ padding: 32px 18px 70px 18px; } }
+
+  .book-eyebrow{
+    font-family:var(--mono); font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--sage); margin-bottom:14px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+  }
+  .book-eyebrow .dot{ width:5px; height:5px; border-radius:50%; background:var(--sage); }
+  .book-title{
+    font-family:var(--serif); font-weight:700; font-size:2.5rem; line-height:1.08;
+    letter-spacing:-0.01em; margin:0 0 10px 0; color:var(--paper);
+  }
+  .book-meta{
+    display:flex; gap:18px; flex-wrap:wrap; align-items:baseline;
+    font-family:var(--sans); color:var(--gray); font-size:0.9rem; margin-bottom:32px;
+    border-bottom:1px solid var(--line); padding-bottom:22px;
+  }
+  .book-meta strong{ color:var(--paper); font-weight:500; }
+  .book-summary{ font-family:var(--serif); font-weight:300; font-size:1.1rem; line-height:1.75; color: rgba(247,243,234,0.92); }
+  .book-summary p{ margin:0 0 20px 0; }
+  .book-summary p:first-of-type::first-letter{
+    font-family:var(--serif); font-weight:600; font-size:3.1rem; line-height:0.8;
+    float:left; padding-right:10px; padding-top:6px; color:var(--amber-bright);
+  }
+  .pane-nav{ display:flex; justify-content:space-between; gap:12px; margin-top:44px; padding-top:22px; border-top:1px solid var(--line); }
+  .pane-nav button{
+    background:none; border:1px solid var(--line); color:var(--paper);
+    font-family:var(--mono); font-size:0.72rem; letter-spacing:0.04em;
+    padding:10px 14px; border-radius:6px; cursor:pointer;
+    transition: border-color .15s ease, color .15s ease;
+  }
+  .pane-nav button:hover:not(:disabled){ border-color:var(--amber); color:var(--amber-bright); }
+  .pane-nav button:disabled{ opacity:0.3; cursor:default; }
+
+  .welcome{ padding: 70px 56px; max-width:620px; }
+  .welcome .kicker{ font-family:var(--mono); font-size:0.7rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--sage); margin-bottom:18px; }
+  .welcome h1{ font-family:var(--serif); font-weight:600; font-size:2.3rem; line-height:1.15; margin:0 0 18px 0; }
+  .welcome p{ font-family:var(--sans); color:var(--gray); font-size:1rem; line-height:1.7; margin-bottom:8px; }
+  .welcome .hint{ margin-top:32px; font-family:var(--mono); font-size:0.76rem; color:var(--amber-bright); }
+
+  /* ---------- Footer ---------- */
+  .site-footer{
+    border-top:1px solid var(--line);
+    background:var(--ink-2);
+    padding:22px 28px;
+    font-family:var(--sans);
+    font-size:0.85rem;
+    color:var(--gray);
+    text-align:center;
+  }
+  .site-footer a{ color:var(--amber-bright); text-decoration:none; }
+  .site-footer a:hover{ text-decoration:underline; }
+
+  .shelf::-webkit-scrollbar{ width:6px; }
+  .shelf::-webkit-scrollbar-thumb{ background:var(--ink-3); border-radius:3px; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="mark">The Shelf</span>
+    <span class="sub">Gold Fundamentals e-library · Historical Fiction</span>
+  </div>
+  <div class="topbar-actions">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="text" id="searchInput" class="form-control" placeholder="Search title or author…" autocomplete="off">
+    </div>
+    <div class="progress-pill" id="countPill">10 titles</div>
+  </div>
+</header>
+
+<div class="container-fluid p-0">
+  <div class="row g-0 app-row">
+    <nav class="col-12 col-md-4 col-lg-3 shelf">
+      <div class="shelf-label">Historical Fiction</div>
+      <ul class="shelf-list" id="shelfList"></ul>
+    </nav>
+
+    <main class="col-12 col-md-8 col-lg-9">
+      <div class="reading-pane" id="readingPane"></div>
+    </main>
+  </div>
+</div>
+
+<footer class="site-footer">
+  Created by Lona Smith in the Republic of South Africa. <a href="mailto:lonasmithhq@gmail.com">lonasmithhq@gmail.com</a>
+</footer>
+
+<script>
+const books = [
+{
+  id: 62, title: "Wolf Hall", author: "Hilary Mantel", year: 2009,
+  summary: `Hilary Mantel's "Wolf Hall" is the first novel in her acclaimed trilogy tracing the rise of Thomas Cromwell, the blacksmith's son who becomes the most powerful commoner in the court of Henry VIII. Rather than the familiar narrative centering Henry, Anne Boleyn, or Thomas More, Mantel tells the story of the English Reformation through the eyes of the man who engineered much of it from the shadows, transforming Cromwell from the cold, scheming villain of popular history into a complex, intensely human figure shaped by personal tragedy, sharp intelligence, and a clear-eyed understanding of how power actually operates.
+
+The novel opens with Cromwell's brutal childhood under an abusive blacksmith father, establishing the formative hardship that drives his lifelong instinct for self-preservation and his contempt for inherited privilege. After years abroad as a soldier and merchant across Europe, he returns to England transformed: multilingual, worldly, and skilled in law and finance, eventually rising through service to Cardinal Wolsey before Wolsey's fall from royal favor over his failure to secure Henry's annulment from Catherine of Aragon.
+
+Cromwell's genius, as Mantel portrays it, lies in his ability to read people and situations with unsentimental precision, navigating the treacherous court politics of Henry's reign through patience, leverage, and an almost lawyerly command of detail rather than charisma or noble birth. He becomes indispensable to Henry precisely because he can accomplish what the aristocracy cannot or will not: dismantling the political power of the Catholic Church in England, securing the king's marriage to Anne Boleyn, and reshaping the machinery of English governance and law in the process.
+
+Mantel's prose technique, written largely in a close, present-tense third person that places readers directly inside Cromwell's calculating mind, was widely praised for making this overfamiliar period feel newly immediate and morally ambiguous. Rather than judging Cromwell's ruthlessness from a distance, the novel asks readers to inhabit the logic of survival in a court where a single misstep, a fallen patron, or a shifting royal mood could mean execution.
+
+The novel's portrayal of Thomas More, traditionally cast as a principled martyr in works like "A Man for All Seasons," is notably unsentimental, presenting his refusal to support the king's annulment as a kind of intransigent vanity rather than pure heroism, while Cromwell's pragmatic flexibility is framed not as villainy but as a survival strategy in a court where rigid ideology was a luxury few could afford.
+
+The novel won the Booker Prize and was followed by two sequels, "Bring Up the Bodies" and "The Mirror and the Light," completing Cromwell's arc through Anne Boleyn's downfall and Cromwell's own eventual execution. Together, the trilogy is widely regarded as one of the most significant achievements in contemporary historical fiction, prized for its psychological depth, linguistic precision, and refusal to flatten its central, morally compromised figure into either hero or villain.`
+},
+{
+  id: 63, title: "All the Light We Cannot See", author: "Anthony Doerr", year: 2014,
+  summary: `Anthony Doerr's "All the Light We Cannot See" weaves together the lives of two young people on opposite sides of the Second World War: Marie-Laure LeBlanc, a blind French girl who flees Paris for the walled coastal city of Saint-Malo carrying a possibly cursed and valuable gem entrusted to her locksmith father, and Werner Pfennig, a German orphan whose gift for radio engineering draws him into the Hitler Youth and eventually onto the front lines of the war he never wanted to fight.
+
+The novel unfolds in short, alternating chapters that move between the two protagonists and across time, gradually converging toward their eventual, fleeting encounter during the Allied bombardment of Saint-Malo in 1944. Marie-Laure's sections trace her loss of sight in childhood, her father's patient construction of an elaborate wooden model of their Paris neighborhood to help her navigate by touch and memory, and her eventual exile to her reclusive great-uncle's house in Saint-Malo, where she becomes entangled in the French Resistance through coded radio transmissions hidden inside a model house.
+
+Werner's chapters trace his path from a German mining orphanage, where his natural aptitude for building and repairing radios is discovered, through a brutal military academy designed to harden boys into ideologically pure soldiers, and into a specialized unit tasked with tracking down illegal radio transmissions, including, unknowingly, the very signals Marie-Laure's family helps broadcast.
+
+A central recurring motif is the so-called "Sea of Flames," a legendary diamond said to grant its keeper immortality while cursing those they love, entrusted to Marie-Laure's father by the Museum of Natural History in Paris before the German occupation; a sinister German gem hunter pursues the stone throughout the novel, adding an element of fable-like menace to the historical narrative. Doerr deliberately leaves ambiguous whether the stone's properties are real or imagined, using it as a meditation on greed, fate, and the stories people tell to make sense of suffering.
+
+The novel is also deeply concerned with the science and poetry of light, radio waves, and the unseen forces that connect people across distance, reflected in its title and in Marie-Laure's blindness, which forces both her and the reader to attend to senses and connections beyond the visual. Doerr's prose is notably lyrical and fragmentary, built from very short chapters that create a mosaic-like reading experience mirroring the novel's themes of fragmentation and reconnection amid war's destruction.
+
+"All the Light We Cannot See" won the Pulitzer Prize for Fiction and became a major bestseller, praised for its formal ambition and its refusal to present a simple narrative of good Allies and evil Germans, instead portraying both Marie-Laure and Werner as young people whose moral choices are shaped, constrained, and sometimes overwhelmed by forces far larger than themselves.`
+},
+{
+  id: 64, title: "The Book Thief", author: "Markus Zusak", year: 2005,
+  summary: `Markus Zusak's "The Book Thief" is narrated by an unusual and strikingly original voice: Death itself, who recounts the story of Liesel Meminger, a young German girl sent to live with foster parents in a working-class neighborhood outside Munich in the years leading up to and through the Second World War, with a wry, world-weary, and unexpectedly tender perspective on human suffering and resilience.
+
+After the death of her younger brother during the family's relocation and her mother's disappearance, presumably due to Communist affiliations that make her a target of the Nazi regime, Liesel arrives at the home of Hans and Rosa Hubermann, a poor but fiercely kind house painter and his sharp-tongued but ultimately loving wife. Liesel is illiterate at the novel's start, and her journey toward literacy, beginning with a stolen gravedigger's manual and continuing through books she steals, borrows, or is given throughout the novel, becomes the central metaphor for the way storytelling and language offer both escape and resistance amid the regime's escalating violence and propaganda.
+
+The novel's title refers to Liesel's habit of acquiring books through theft, most poignantly from Nazi book-burning piles and from the library of the mayor's wife, who eventually becomes a quiet, complicit ally in Liesel's reading habit. Hans Hubermann teaches Liesel to read using these stolen and borrowed books, and the nightly reading sessions between foster father and daughter become one of the novel's emotional anchors, particularly during the terrifying nights of Allied bombing raids when the neighborhood shelters in basements and Liesel reads aloud to calm the frightened residents.
+
+A central plot thread involves Max Vandenburg, a young Jewish man whom the Hubermanns hide in their basement at enormous personal risk, motivated in part by a debt Hans owes to Max's late father from the First World War. The relationship between Liesel and Max, both outsiders bonded by storytelling, books, and shared fear, becomes one of the novel's most affecting threads, complicated by the constant danger of discovery and the eventual disruption of their fragile domestic peace by the realities of the war.
+
+Death's narration gives the novel a distinctive tonal register, simultaneously detached and deeply moved by the humans it observes, often foreshadowing tragic outcomes well before they occur and reflecting philosophically on the strange combination of cruelty and beauty it witnesses in human behavior during wartime. This narrative choice allows Zusak to address the Holocaust and the broader suffering of ordinary German civilians under Nazi rule without either minimizing the regime's horrors or reducing every German character to either villain or passive bystander.
+
+"The Book Thief" became an international bestseller and a frequently assigned text in schools, praised for its inventive narration, its unsentimental but ultimately hopeful treatment of childhood amid atrocity, and its insistence on the power of words, for good and ill, as a central force shaping human history.`
+},
+{
+  id: 65, title: "The Nightingale", author: "Kristin Hannah", year: 2015,
+  summary: `Kristin Hannah's "The Nightingale" follows two French sisters, Vianne and Isabelle Mauriac, whose radically different responses to the German occupation of France during the Second World War drive the novel's parallel narratives of survival, resistance, and the often-overlooked contributions of women to the war effort.
+
+Vianne, the elder sister, is a quiet schoolteacher whose husband is called to the front early in the war, leaving her to manage their household and protect her young daughter alone in their small village as a German officer is billeted in their home. Her arc traces a slow, difficult evolution from a woman focused primarily on survival and the safety of her immediate family toward increasingly dangerous acts of quiet defiance, including hiding Jewish children, as the brutality of the occupation escalates and the cost of passivity becomes unbearable.
+
+Isabelle, the younger and more impulsive sister, is expelled from multiple schools for her rebellious temperament before the war begins, and her restless defiance finds a clear purpose once France falls: she becomes a courier for the Resistance and eventually adopts the code name "the Nightingale" as she develops and runs an escape route guiding downed Allied airmen across the Pyrenees into neutral Spain, a real historical practice the novel draws on for its central plot device. Isabelle's storyline incorporates real danger and brutality, including eventual capture and imprisonment, reflecting the genuinely lethal risks faced by women in the Resistance.
+
+The sisters' relationship, strained by a difficult shared childhood after their mother's death and their father's emotional withdrawal, forms the emotional core of the novel alongside its war narrative, with Hannah using their contrasting choices, Vianne's domestic caution versus Isabelle's active rebellion, to explore the full spectrum of ways ordinary people resisted, endured, or were complicit during the occupation, without suggesting either path was simply right or wrong.
+
+The novel is framed by a present-day narrative in which an elderly woman, revealed gradually to be one of the sisters now living in America, prepares to attend a reunion in France and reflects on the wartime events her family has never fully discussed, a structural choice that builds suspense around which sister has survived and what secrets the family has carried for decades.
+
+Hannah has spoken about researching the real women who served as Resistance couriers and escape-line organizers, an aspect of wartime history that received far less attention than male combatants and male Resistance leaders for decades afterward, and "The Nightingale" is frequently credited with bringing renewed popular attention to women's specific and significant contributions to the French Resistance. The novel became a major bestseller and one of Hannah's most acclaimed works, praised for its emotional intensity and its portrayal of female courage and sacrifice operating largely outside the official historical record.`
+},
+{
+  id: 66, title: "The Pillars of the Earth", author: "Ken Follett", year: 1989,
+  summary: `Ken Follett's "The Pillars of the Earth" is a sprawling historical epic set in twelfth-century England during a period of civil war known as "the Anarchy," structured around the decades-long construction of a great cathedral in the fictional town of Kingsbridge, which Follett uses as both literal setting and organizing metaphor for the ambitions, rivalries, and social upheavals of the period.
+
+The novel follows an ensemble cast over several decades, centered most prominently on Tom Builder, a skilled but impoverished master mason whose dream of building a great cathedral drives much of the plot, and his eventual adopted son Jack, whose architectural genius and unconventional design ideas ultimately bring that dream to fruition. Around them orbits a wide cast including Prior Philip, the shrewd and principled monk who becomes the driving institutional force behind Kingsbridge's cathedral project; Aliena, a noblewoman who loses her family's lands and status and must rebuild her life through business acumen; and William Hamleigh, a sadistic nobleman whose cruelty and thwarted ambitions provide much of the novel's antagonistic tension across its considerable length.
+
+The novel is notable for its extensive, carefully researched detail on medieval architecture, particularly the technical and artistic evolution from the heavy Romanesque style toward the soaring innovations of early Gothic architecture, including pointed arches and ribbed vaulting that allowed for taller, lighter, more luminous cathedral interiors. Follett, who has described extensive research into medieval building techniques and church history as foundational to the novel, uses the literal construction process, including setbacks like structural collapses, funding crises, and skilled-labor disputes, as a structuring device for the broader plot's many reversals of fortune.
+
+Beyond the architectural narrative, the novel engages extensively with the political instability of the Anarchy, the prolonged civil war between rival claimants to the English throne following the death of Henry I, and uses this backdrop to explore the precariousness of power, property, and survival for both nobility and commoners during a period when royal authority was weak and local lords often acted with near-total impunity. The Church, represented through the priory at Kingsbridge, emerges as both a genuine source of stability, charity, and artistic achievement and an institution vulnerable to its own internal corruption and power struggles, embodied in the novel's central conflict between Prior Philip's principled leadership and the corrupt, self-interested bishops and priors who oppose him.
+
+The novel's considerable length and dense plotting, spanning multiple generations and incorporating storylines of betrayal, romance, religious conflict, and revenge, made it initially a slow seller before becoming one of the most popular historical novels of its era through sustained word-of-mouth, eventually spawning sequels including "World Without End" and "A Column of Fire" that continue the saga of Kingsbridge across subsequent centuries. "The Pillars of the Earth" remains widely regarded as a defining example of the multi-generational historical epic, praised for combining meticulous research with the narrative momentum of a page-turning popular thriller.`
+},
+{
+  id: 67, title: "The Help", author: "Kathryn Stockett", year: 2009,
+  summary: `Kathryn Stockett's "The Help" is set in Jackson, Mississippi, in the early 1960s, and tells its story through three alternating first-person narrators: Aibileen Clark and Minny Jackson, Black domestic workers employed by white families, and Eugenia "Skeeter" Phelan, a young white woman recently returned from college who aspires to become a writer and gradually becomes determined to document the experiences of the Black maids who raise and care for the children of Jackson's white families, despite the considerable danger this project poses to everyone involved.
+
+Aibileen, who has spent her career raising white children while grieving the death of her own adult son, agrees, reluctantly at first, to share her stories with Skeeter, partly motivated by a deep and complicated love for the white child currently in her care and a growing inability to remain silent about the dehumanizing treatment she and other domestic workers routinely endure. Minny, sharper-tongued and more openly defiant, brings both comic energy and pointed social critique to the narrative, particularly through her tumultuous employment history, including her complicated relationship with a socially marginalized white employer who, unlike most of Jackson's white women, treats Minny with genuine warmth and equality.
+
+Skeeter's narrative thread traces her growing disillusionment with the casual, deeply entrenched racism of her childhood friends and social circle, most pointedly embodied by Hilly Holbrook, a status-obsessed society leader who campaigns for segregated bathrooms in white households on supposedly hygienic grounds, a plotline drawn from real historical advocacy for such segregation during the period. Skeeter's project, compiling anonymous interviews with Jackson's Black domestic workers into a book intended to expose the reality of their treatment, unfolds against the rising tension and danger of the early Civil Rights era, including real historical events referenced in the background of the novel, such as the murder of NAACP field secretary Medgar Evers in Jackson in 1963.
+
+The novel's interweaving of comic, almost satirical social commentary on the petty cruelties and absurdities of Jackson's white social hierarchy with the genuine danger and trauma faced by its Black characters generated significant critical debate upon publication and afterward. Some critics and readers praised the novel for bringing mainstream attention to the lived experience of Black domestic workers in the Jim Crow South and for its vivid, emotionally resonant characterization of Aibileen and Minny; others raised substantial concerns about a white author centering significant portions of the narrative on a white protagonist's moral awakening, and about the novel's relatively gentle treatment of the most severe violence of the period, as well as questions about whether the dialect used for Black characters' speech reinforced rather than complicated racial stereotypes.
+
+Despite, and in some ways because of, this ongoing debate, "The Help" became one of the bestselling novels of its decade and was adapted into a commercially and critically successful film, remaining a frequently discussed and analyzed text both for its narrative craft and for the broader questions it raises about who has standing to tell which stories, and how popular fiction engages with the unresolved legacies of American segregation.`
+},
+{
+  id: 68, title: "Hamnet", author: "Maggie O'Farrell", year: 2020,
+  summary: `Maggie O'Farrell's "Hamnet" imagines the domestic life of William Shakespeare's family in Stratford-upon-Avon, centering not on the playwright himself, who remains largely offstage and unnamed throughout much of the novel, referred to only as "the husband" or "the father," but on his wife Agnes (a historically attested variant of Anne Hathaway's name that O'Farrell deliberately chooses to use) and their three children, building toward the death of their only son, Hamnet, from what is presumed to be bubonic plague at age eleven, an event the novel treats as the emotional and structural center around which the entire narrative pivots.
+
+The novel's structure interweaves two timelines: one tracing Agnes and the young Shakespeare's courtship and early marriage, including the social complications of an unplanned pregnancy that hastens their wedding and the family tensions surrounding Shakespeare's relationship with his volatile, financially troubled father; and another following the household in the days immediately surrounding Hamnet's death, including a vividly imagined account of the flea-borne transmission of plague from a ship's cargo through several intermediary points before reaching the Shakespeare household, a sequence O'Farrell uses to dramatize the random, almost arbitrary nature of the disease's spread.
+
+Agnes is portrayed throughout as a figure attuned to the natural world, skilled in herbal medicine and possessing an almost supernatural sensitivity to the people around her, including a recurring ability to sense character and fate through touch, a characterization O'Farrell draws partly from local Warwickshire folklore and partly from her own invention, used to deepen Agnes's grief and her sense of having failed to foresee or prevent her son's death despite her gifts.
+
+A central and deliberately understated thread running through the novel is the question of how grief shapes creative work, building toward the novel's quiet but devastating final movement, in which O'Farrell connects Hamnet's death to the composition of Shakespeare's "Hamlet," written several years later and featuring a dead son's name transposed onto a story of a living son's grief for his father, inverting the actual loss Shakespeare experienced. The novel treats this connection not as a tidy explanation of artistic inspiration but as one possible, achingly human way that loss might surface, transformed and displaced, within creative work, without ever definitively claiming this as historical fact.
+
+O'Farrell's prose is notably sensory and immersive, paying close attention to smell, touch, and the physical textures of Elizabethan domestic life, from beekeeping and herb gardens to the social and economic precariousness of a household dependent on an absent husband's uncertain income in London. The novel deliberately withholds Shakespeare's name throughout, a structural choice that has been widely discussed as a way of decentering the canonical literary genius in favor of the domestic, female-centered grief that history has largely left unrecorded.
+
+"Hamnet" won the Women's Prize for Fiction and was widely praised for its emotionally precise handling of child loss and its imaginative reconstruction of a family largely absent from the historical record, offering a deeply human counter-narrative to the mythologized figure of Shakespeare.`
+},
+{
+  id: 69, title: "The Underground Railroad", author: "Colson Whitehead", year: 2016,
+  summary: `Colson Whitehead's "The Underground Railroad" reimagines the historical network of secret routes and safe houses that helped enslaved people escape to freedom in the antebellum American South as a literal, physical railroad running beneath the earth, complete with tracks, tunnels, and conductors, a bold structural and metaphorical choice that allows Whitehead to move his protagonist, Cora, through a series of distinct states that each function as exaggerated, allegorical versions of different facets of America's racial history rather than strictly realistic depictions of any single historical moment.
+
+Cora is a young enslaved woman on a brutal Georgia plantation who, after witnessing escalating violence and the calculated cruelty of the plantation's owners, decides to attempt escape alongside another enslaved man, Caesar, who has learned of the railroad's existence. Their flight sets the novel's episodic structure in motion, as Cora travels via the underground railroad to a sequence of states, each rendered with a deliberately heightened, sometimes surreal intensity that compresses and recombines different eras and aspects of American racial violence and policy into single, vivid tableaux.
+
+In South Carolina, Cora encounters a superficially progressive society that proves to be running covert, exploitative medical experimentation and forced sterilization programs on Black residents, a chapter widely read as an indictment of the historical Tuskegee syphilis study and the broader eugenics movement, transposed into the novel's nineteenth-century setting. In North Carolina, she encounters a state that has outlawed Black residence entirely, enforcing this through public lynching displays along its roads, evoking both historical lynching practices and twentieth-century Jim Crow violence. Tennessee appears scorched by literal and figurative fire, while Indiana offers a brief, fragile vision of a self-sufficient Black farming community, evoking real historical Black settlements, before it too is destroyed by white mob violence, echoing events like the Tulsa race massacre that occurred decades after the novel's nominal setting.
+
+Throughout, Cora is pursued by Ridgeway, a relentless and philosophically self-justifying slave catcher whose worldview, built around a belief in white American "manifest destiny" and the supposed natural order of racial hierarchy, provides the novel's most direct articulation of the ideological architecture underpinning American slavery and its aftermath. Ridgeway's pursuit gives the novel a propulsive thriller-like momentum even as its episodic structure ranges widely across historical periods and regional variations of American racism.
+
+Whitehead's deliberate anachronisms, the literal railroad, the compression of different historical eras into single states, have been widely discussed as a structural strategy allowing the novel to function less as a single historically accurate narrative and more as a comprehensive, symbolic survey of the recurring patterns and mutations of American racial violence and resistance across more than a century, suggesting continuity between slavery and its many afterlives rather than treating it as a contained, concluded historical event.
+
+The novel won both the Pulitzer Prize for Fiction and the National Book Award, and was adapted into a critically acclaimed television series, with critics widely praising Whitehead's formal inventiveness and the moral clarity with which the novel refuses to offer easy resolution or redemptive uplift in its portrayal of Cora's ongoing flight toward a freedom that remains perpetually, painfully provisional.`
+},
+{
+  id: 70, title: "The Tattooist of Auschwitz", author: "Heather Morris", year: 2018,
+  summary: `Heather Morris's "The Tattooist of Auschwitz" is a novel based on the real-life testimony of Lale Sokolov, a Slovakian Jewish prisoner at Auschwitz-Birkenau who survived the camp by working as the "Tätowierer," the prisoner forced to tattoo identification numbers onto the arms of incoming prisoners, a role that afforded him certain limited privileges and mobility within the camp compared to most other prisoners, while still leaving him in constant, mortal danger and forcing him into the harrowing position of personally marking thousands of fellow prisoners for a system designed to dehumanize and ultimately destroy them.
+
+The novel's central narrative follows Lale's relationship with Gita Furman, a young woman whose arm he tattoos shortly after her arrival at the camp, and the clandestine, perilous romance that develops between them amid the constant threat of violence, starvation, and death that defines daily life in Auschwitz. Morris, who interviewed Lale extensively over several years before his death in 2006, before adapting his account first into a screenplay and later into this novel, presents their relationship as a source of fragile hope and human connection sustained against the camp's systematic attempt to eliminate exactly such bonds.
+
+Lale's relatively privileged position as the Tätowierer, including better food rations and somewhat improved living conditions, also allows him to acquire and trade items, including jewels and valuables taken from murdered prisoners by corrupt camp officials, which he uses to help other prisoners, including securing extra food and medical assistance for Gita and others, at significant ongoing risk to his own life should this smuggling be discovered.
+
+The novel does not shy away from depicting the camp's horrors, including selections for the gas chambers, brutal punishments, and the constant proximity to death that defined the experience of all prisoners, but its narrative focus remains tightly centered on Lale and Gita's survival and eventual reunion after the war, structuring the novel as fundamentally a story of love and endurance against an almost incomprehensibly brutal historical backdrop.
+
+The novel's publication generated significant controversy among Holocaust historians and survivor advocacy organizations, who identified numerous factual inaccuracies regarding the layout, operations, and specific historical details of Auschwitz, leading the Auschwitz-Birkenau Memorial and Museum to issue public corrections regarding several claims in the book. Morris and her publishers acknowledged the work as a novel based on Lale's personal recollections and testimony rather than a rigorously fact-checked historical account, noting that memory, especially decades after profound trauma, is imperfect, while critics maintained that greater care was warranted given the book's marketing and reception as closely grounded in true events.
+
+Despite this controversy, "The Tattooist of Auschwitz" became an enormous international bestseller, credited with introducing a very wide popular readership to Holocaust history and survivor testimony, and was followed by companion novels, including "Cilka's Journey," continuing to explore related stories drawn from survivor accounts Morris encountered during her research, while the surrounding debate has also prompted broader public conversation about the responsibilities and limits of fictionalizing historical atrocity and survivor testimony.`
+},
+{
+  id: 71, title: "The Invisible Bridge", author: "Julie Orringer", year: 2010,
+  summary: `Julie Orringer's "The Invisible Bridge" follows Andras Lévi, a young Hungarian Jewish architecture student, from his departure for study in Paris in 1937 through the cataclysmic upheavals of the Second World War and the Holocaust in Hungary, tracing both his personal and romantic life and the broader collapse of the relatively assimilated, cosmopolitan Hungarian Jewish world into which he was born.
+
+The novel opens with Andras's arrival in Paris on a scholarship to study architecture, where he falls in love with Klara Morgenstern, an older Hungarian ballet teacher living in Paris under a cloud of mysterious past scandal that gradually unfolds over the course of the novel, revealing a history of exile tied to a relationship and political circumstances from her youth in Budapest. Their courtship unfolds against the backdrop of increasing political tension in Europe, as Andras and his fellow Hungarian Jewish students in Paris watch with growing alarm as fascism strengthens across the continent and France's own political climate grows more hostile toward Jewish refugees and foreign students.
+
+As the war escalates, Andras is eventually forced to return to Hungary, where he and his brothers become subject to forced labor service, a distinct and historically significant feature of the Hungarian Jewish experience during the war in which Jewish men were conscripted into brutal, often lethal forced labor battalions serving the Hungarian military, frequently in horrific conditions on the Eastern Front, rather than being immediately subject to the deportations to death camps that would come somewhat later for Hungary's Jewish population compared to other occupied countries.
+
+Orringer's extensive research into this specific and, in English-language fiction, relatively underexplored dimension of the Holocaust, the Hungarian labor battalion system, forms one of the novel's most distinctive contributions, depicting in granular detail the forced marches, brutal officers, and slow attrition faced by Andras and his brothers as they are shuttled between assignments, even as the broader machinery of deportation and genocide accelerates around them following Germany's occupation of Hungary in 1944.
+
+The novel maintains its focus on the Lévi and Morgenstern-Hász family's interconnected fates throughout, including Klara's own complicated return to a Hungary that holds dangerous reminders of her past, and the fraying but persistent bonds between Andras's family members as circumstances scatter and endanger them across the rapidly collapsing landscape of wartime Hungary. Orringer balances this historical specificity with sustained attention to her characters' interior lives, their art, their relationships, and their attempts to maintain some semblance of normal aspiration and connection even as the historical catastrophe closes in around them.
+
+The novel's title refers to the recurring motif of bridges, both literal, including Paris's many bridges where much of Andras and Klara's courtship unfolds, and figurative, as connections between people, places, and a vanishing prewar world that the novel's characters struggle to maintain even as it becomes increasingly invisible, inaccessible, or destroyed. "The Invisible Bridge" was widely praised for its meticulous historical research and its expansive, almost nineteenth-century novelistic ambition, offering an unusually detailed fictional account of the specific and often overlooked Hungarian dimension of the Holocaust within the broader landscape of World War II historical fiction.`
+}
+];
+
+let currentId = null;
+
+function renderShelf(filter = "") {
+  const list = document.getElementById('shelfList');
+  const q = filter.trim().toLowerCase();
+  const filtered = books.filter(b =>
+    b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q)
+  );
+
+  document.getElementById('countPill').textContent =
+    filtered.length === books.length ? `${books.length} titles` : `${filtered.length} of ${books.length}`;
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<li class="no-results">No titles match your search.</li>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(b => `
+    <li class="spine ${b.id === currentId ? 'active' : ''}" data-id="${b.id}">
+      <span class="spine-index">${b.id}</span>
+      <span class="spine-text">
+        <div class="spine-title">${escapeHtml(b.title)}</div>
+        <div class="spine-author">${escapeHtml(b.author)}</div>
+      </span>
+    </li>
+  `).join('');
+
+  list.querySelectorAll('.spine').forEach(el => {
+    el.addEventListener('click', () => openBook(parseInt(el.dataset.id)));
+  });
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function openBook(id) {
+  currentId = id;
+  const book = books.find(b => b.id === id);
+  if (!book) return;
+
+  const idx = books.findIndex(b => b.id === id);
+  const prev = books[idx - 1];
+  const next = books[idx + 1];
+
+  const paragraphs = book.summary.trim().split(/\n\n+/).map(p => `<p>${escapeHtml(p)}</p>`).join('');
+
+  document.getElementById('readingPane').innerHTML = `
+    <div class="book-eyebrow"><span>No. ${book.id} on the shelf</span><span class="dot"></span><span>Historical Fiction</span></div>
+    <h1 class="book-title">${escapeHtml(book.title)}</h1>
+    <div class="book-meta">
+      <span>by <strong>${escapeHtml(book.author)}</strong></span>
+      <span>·</span>
+      <span>${book.year}</span>
+    </div>
+    <div class="book-summary">${paragraphs}</div>
+    <div class="pane-nav">
+      <button id="prevBtn" ${!prev ? 'disabled' : ''}>${prev ? '← ' + escapeHtml(prev.title) : '— start of shelf'}</button>
+      <button id="nextBtn" ${!next ? 'disabled' : ''}>${next ? escapeHtml(next.title) + ' →' : 'end of shelf —'}</button>
+    </div>
+  `;
+
+  if (prev) document.getElementById('prevBtn').addEventListener('click', () => openBook(prev.id));
+  if (next) document.getElementById('nextBtn').addEventListener('click', () => openBook(next.id));
+
+  renderShelf(document.getElementById('searchInput').value);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderWelcome() {
+  document.getElementById('readingPane').innerHTML = `
+    <div class="welcome">
+      <div class="kicker">The Shelf — 10 titles</div>
+      <h1>Pull a book off the shelf.</h1>
+      <p>Ten landmark works of historical fiction, each with a full reading summary covering plot, characters, and historical context.</p>
+      <p>Browse the shelf on the left, or search by title or author above.</p>
+      <div class="hint">→ start with No. 62, Wolf Hall</div>
+    </div>
+  `;
+}
+
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  renderShelf(e.target.value);
+});
+
+renderShelf();
+renderWelcome();
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
